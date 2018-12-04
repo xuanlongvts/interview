@@ -4,7 +4,7 @@ import RouterMain from './consts';
 import AsyncComponent from '../components/_asynComponent';
 
 const AsyncCountDown = AsyncComponent(lazy(() => import('../components/countDown')));
-const AsyncImagesSlider = AsyncComponent(lazy(() => import('../components/imgSlider')));
+const AsyncImagesSlider = AsyncComponent(lazy(() => import('../components/ImgSlider')));
 
 const routersAuthen = [
     {

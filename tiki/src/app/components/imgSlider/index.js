@@ -1,18 +1,9 @@
 import React, { PureComponent } from 'react';
-import { Container } from 'reactstrap';
+import PropTypes from 'prop-types';
 import './style.scss';
 
 import imgIconLeft from './imgs/left-chevron.png';
 import imgIconRight from './imgs/right-chevron.png';
-
-import imgAurora from './imgs/aurora.jpg';
-import imgCanyon from './imgs/canyon.jpg';
-import imgCity from './imgs/city.jpg';
-import imgDesert from './imgs/desert.jpg';
-import imgMountains from './imgs/mountains.jpg';
-import imgRedsky from './imgs/redsky.jpg';
-import imgSandyShores from './imgs/sandy-shores.jpg';
-import imgTreeOfLife from './imgs/tree-of-life.jpg';
 
 const Slide = ({ image }) => (
     <div
@@ -39,37 +30,136 @@ const RightArrow = props => {
     );
 };
 
-class ImgSlider extends PureComponent {
+const PagingBottom = ({ length, currentIndex, handleClickPaging }) => {
+    var ListCycle = [];
+    for (var i = 0; i < length; i++) {
+        ListCycle.push(
+            <span key={i} className={currentIndex === i ? 'active' : null} onClick={handleClickPaging(i)}>
+                {i}
+            </span>,
+        );
+    }
+
+    return <div className="paging">{ListCycle}</div>;
+};
+
+class Carousel extends PureComponent {
     constructor(props) {
         super(props);
 
         this.state = {
-            images: [imgAurora, imgCanyon, imgCity, imgDesert, imgMountains, imgRedsky, imgSandyShores, imgTreeOfLife],
             currentIndex: 0,
             translateValue: 0,
+            dataLength: 0,
         };
     }
 
+    componentDidMount() {
+        const { data, autoplay } = this.props;
+
+        Number.isInteger(autoplay) && this.autoplaySlider(autoplay);
+
+        data.length &&
+            this.setState({
+                dataLength: data.length,
+            });
+    }
+
+    autoplaySlider(number) {
+        this.interval = setInterval(() => this.nextSlide(), number);
+    }
+
+    prevSlide = () => {
+        const { currentIndex, dataLength } = this.state;
+        const { infinite, autoplay } = this.props;
+
+        if (Number.isInteger(autoplay)) {
+            clearInterval(this.interval);
+            this.autoplaySlider(autoplay);
+        }
+
+        if (currentIndex === 0 && infinite) {
+            return this.setState({
+                currentIndex: dataLength - 1,
+                translateValue: -this.slideWidth() * (dataLength - 1),
+            });
+        }
+
+        currentIndex !== 0 &&
+            this.setState(prevState => ({
+                currentIndex: prevState.currentIndex - 1,
+                translateValue: prevState.translateValue + this.slideWidth(),
+            }));
+    };
+
+    nextSlide = () => {
+        const { currentIndex, dataLength } = this.state;
+        const { infinite, autoplay } = this.props;
+
+        if (Number.isInteger(autoplay)) {
+            clearInterval(this.interval);
+            this.autoplaySlider(autoplay);
+        }
+
+        if (currentIndex === dataLength - 1 && infinite) {
+            return this.setState({
+                currentIndex: 0,
+                translateValue: 0,
+            });
+        }
+
+        currentIndex < dataLength - 1 &&
+            this.setState(prevState => {
+                return {
+                    currentIndex: prevState.currentIndex + 1,
+                    translateValue: prevState.translateValue - this.slideWidth(),
+                };
+            });
+    };
+
+    handleClickPaging = key => () => {
+        const { autoplay } = this.props;
+
+        if (Number.isInteger(autoplay)) {
+            clearInterval(this.interval);
+            this.autoplaySlider(autoplay);
+        }
+
+        return this.setState({
+            currentIndex: key,
+            translateValue: -this.slideWidth() * key,
+        });
+    };
+
+    slideWidth = () => document.querySelector('.slide').clientWidth;
+
     render() {
-        const { images } = this.state;
+        const { translateValue, dataLength, currentIndex } = this.state;
+        const { data } = this.props;
 
         return (
-            <Container>
-                <div className="slider">
-                    <div
-                        id="wrapImg"
-                        style={{
-                            transform: `translateX(${this.state.translateValue}px)`,
-                            transition: 'transform ease-out 0.45s',
-                        }}>
-                        {images.length && images.map((item, key) => <Slide key={key} image={item} />)}
-                    </div>
-                    <LeftArrow />
-                    <RightArrow />
+            <div className="slider">
+                <div
+                    id="wrapImg"
+                    style={{
+                        transform: `translateX(${translateValue}px)`,
+                        transition: 'transform ease-out 0.5s',
+                    }}>
+                    {data.length && data.map((item, key) => <Slide key={key} image={item} />)}
                 </div>
-            </Container>
+                <LeftArrow prevSlide={this.prevSlide} />
+                <RightArrow nextSlide={this.nextSlide} />
+
+                <PagingBottom length={dataLength} currentIndex={currentIndex} handleClickPaging={this.handleClickPaging} />
+            </div>
         );
     }
 }
 
-export default ImgSlider;
+Carousel.propTypes = {
+    data: PropTypes.array.isRequired,
+    infinite: PropTypes.bool,
+    autoplay: PropTypes.number,
+};
+
+export default Carousel;
