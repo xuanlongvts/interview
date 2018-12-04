@@ -69,14 +69,20 @@ class Carousel extends PureComponent {
         this.interval = setInterval(() => this.nextSlide(), number);
     }
 
-    prevSlide = () => {
-        const { currentIndex, dataLength } = this.state;
-        const { infinite, autoplay } = this.props;
+    resetInterval() {
+        const { autoplay } = this.props;
 
         if (Number.isInteger(autoplay)) {
             clearInterval(this.interval);
             this.autoplaySlider(autoplay);
         }
+    }
+
+    prevSlide = () => {
+        const { currentIndex, dataLength } = this.state;
+        const { infinite } = this.props;
+
+        this.resetInterval();
 
         if (currentIndex === 0 && infinite) {
             return this.setState({
@@ -94,12 +100,9 @@ class Carousel extends PureComponent {
 
     nextSlide = () => {
         const { currentIndex, dataLength } = this.state;
-        const { infinite, autoplay } = this.props;
+        const { infinite } = this.props;
 
-        if (Number.isInteger(autoplay)) {
-            clearInterval(this.interval);
-            this.autoplaySlider(autoplay);
-        }
+        this.resetInterval();
 
         if (currentIndex === dataLength - 1 && infinite) {
             return this.setState({
@@ -118,12 +121,7 @@ class Carousel extends PureComponent {
     };
 
     handleClickPaging = key => () => {
-        const { autoplay } = this.props;
-
-        if (Number.isInteger(autoplay)) {
-            clearInterval(this.interval);
-            this.autoplaySlider(autoplay);
-        }
+        this.resetInterval();
 
         return this.setState({
             currentIndex: key,
